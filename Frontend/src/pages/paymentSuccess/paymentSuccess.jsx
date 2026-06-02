@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import './PaymentSuccess.css'
+import './paymentSuccess.css'
 import { StoreContext } from '../../context/StoreContext'
 
 const PaymentSuccess = () => {
