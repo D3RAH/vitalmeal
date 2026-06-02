@@ -8,7 +8,7 @@ import Footer from "./components/Footer/Footer";
 import LoginPopup from "./components/LoginPopup/LoginPopup";
 import PaymentSuccess from './pages/paymentSuccess/paymentSuccess';
 import MyOrders from "./pages/MyOrders/MyOrders";
-import ChatWidget from "./components/ChatWidget/Chatwidget";
+import ChatWidget from "./components/ChatWidget/ChatWidget";
 
 const App = () => {
 
