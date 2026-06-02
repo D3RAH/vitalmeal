@@ -6,6 +6,7 @@ export const StoreContext = createContext(null)
 const StoreContextProvider = (props) => {
 
     const [cartItems, setCartItems] = useState({});
+    console.log("Vercel Deployment Test - If you see this, the new build is live!");
     const url = "https://vitalmeal.vercel.app";
     const [token,setToken] = useState("");
     // const [food_list,setFoodList] = useState(staticFoodList);
