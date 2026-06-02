@@ -1,0 +1,18 @@
+.payment-success-container {
+  text-align: center;
+  margin-top: 120px;
+  padding: 20px;
+}
+
+.payment-status {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+
+.payment-reference {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+
+
