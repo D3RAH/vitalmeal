@@ -1,10 +1,10 @@
 import foodModel from "../models/foodModel.js";
-import fs from 'fs'
+import { v2 as cloudinary } from 'cloudinary';
 
 // add food item 
 const addFood = async (req,res) => {
 
-    let image_filename = `${req.file.filename}`;
+    let image_filename = req.file.path;
 
     const food = new foodModel({
         name: req.body.name,
@@ -38,7 +38,10 @@ const listFood = async (req,res) => {
 const removeFood = async (req,res) => {
     try {
         const food = await foodModel.findById(req.body.id);
-        fs.unlink(`uploads/${food.image}`,() => {})
+        if (food.image && food.image.includes('cloudinary')) {
+            const publicId = food.image.split('/').slice(-1)[0].split('.')[0];
+            await cloudinary.uploader.destroy(`vitalmeal/${publicId}`);
+        }
 
         await foodModel.findByIdAndDelete(req.body.id);
         res.json({success:true,message:"Food Removed"})

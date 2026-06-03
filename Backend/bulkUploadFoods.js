@@ -1,5 +1,20 @@
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import foodModel from './models/foodModel.js';
+
+
+import { v2 as cloudinary } from 'cloudinary';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Connect to MongoDB with timeout options
 const connectDB = async () => {
@@ -83,9 +98,27 @@ const uploadFoods = async () => {
         const deleteResult = await foodModel.deleteMany({});
         console.log(`🗑️  Cleared ${deleteResult.deletedCount} existing foods`);
         
+        const foodsWithUrls = [];
+
+        for (const food of vitalMealFoods) {
+            const imagePath = path.join(__dirname, 'uploads', food.image);
+            console.log(`Uploading ${food.image} to Cloudinary...`);
+
+            const result = await cloudinary.uploader.upload(imagePath, {
+                folder: 'vitalmeal'
+            });
+
+            foodsWithUrls.push({
+                ...food,
+                image: result.secure_url
+            });
+
+            console.log(`✅ ${food.name} — image uploaded`);
+        }
+
         // Insert all VitaMeal foods
         console.log("Inserting new foods...");
-        const insertResult = await foodModel.insertMany(vitalMealFoods);
+        const insertResult = await foodModel.insertMany(foodsWithUrls);
         console.log(`✅ Successfully uploaded ${insertResult.length} VitaMeal foods!`);
         
         // Verify the count
