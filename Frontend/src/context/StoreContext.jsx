@@ -7,7 +7,7 @@ const StoreContextProvider = (props) => {
 
     const [cartItems, setCartItems] = useState({});
     console.log("Vercel Deployment Test - If you see this, the new build is live!");
-    const url = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    const url = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "http://localhost:3000";
     const [token,setToken] = useState("");
     // const [food_list,setFoodList] = useState(staticFoodList);
     const [food_list,setFoodList] = useState([]);
