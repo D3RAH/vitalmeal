@@ -7,7 +7,7 @@ const StoreContextProvider = (props) => {
 
     const [cartItems, setCartItems] = useState({});
     console.log("Vercel Deployment Test - If you see this, the new build is live!");
-    const url = "https://vitalmeal.vercel.app";
+    const url = import.meta.env.VITE_API_URL || "http://localhost:3000";
     const [token,setToken] = useState("");
     // const [food_list,setFoodList] = useState(staticFoodList);
     const [food_list,setFoodList] = useState([]);
@@ -52,7 +52,7 @@ const StoreContextProvider = (props) => {
 
     const loadCartData = async (token) => {
         const response = await axios.post(url+"/api/cart/get",{},{headers:{token}})
-        setCartItems(response.data.cartData);
+        setCartItems(response.data.cartData || {});
     }
 
     useEffect(()=> {

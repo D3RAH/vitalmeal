@@ -8,9 +8,13 @@
   scroll-behavior: smooth;
 }
 
-body{ 
+html, body {
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100%;
 }
+
 
 a{
   text-decoration: none;
@@ -20,6 +24,7 @@ a{
 .app{
   width: 80%;
   margin: auto;
+  max-width: 100%;
 }
 
 @keyframes fadeIn {
