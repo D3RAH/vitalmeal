@@ -37,6 +37,10 @@ app.get("/", (req,res) => {
     res.send("API working")
 })
 
-app.listen(port, () => {
-    console.log('server is active')
-})
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log('server is active')
+    })
+}
+
+export default app;
