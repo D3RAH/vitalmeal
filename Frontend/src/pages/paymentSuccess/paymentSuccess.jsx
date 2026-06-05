@@ -7,7 +7,7 @@ const PaymentSuccess = () => {
   const [searchParams] = useSearchParams()
   const [status, setStatus] = useState('Verifying payment...')
   const reference = searchParams.get('reference')
-  const {setCartItems } = useContext(StoreContext)
+  const {setCartItems, url } = useContext(StoreContext)
 
   // get order ID (saved when placing order)
   const orderId = localStorage.getItem("orderId")
@@ -22,7 +22,7 @@ const PaymentSuccess = () => {
 
             try {
               // VERIFY PAYSTACK PAYMENT
-            const response = await fetch(`http://localhost:3000/api/paystack/verify/${reference}`);
+            const response = await fetch(`${url}/api/paystack/verify/${reference}`);
             const data = await response.json();
 
             if (data?.data?.status === 'success' || data?.order?.status === 'Paid') {
@@ -35,7 +35,7 @@ const PaymentSuccess = () => {
                 const token = localStorage.getItem('token')
                 if (token) {
                   try {
-                    await fetch('http://localhost:3000/api/cart/clear', {
+                    await fetch(`${url}/api/cart/clear`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ const PaymentSuccess = () => {
                 // UPDATE ORDER PAYMENT STATUS (Only if it's a website order with an ID)
                 if (orderId) {
                   localStorage.removeItem("orderId")
-                  await fetch('http://localhost:3000/api/order/verify-payment', {
+                  await fetch(`${url}/api/order/verify-payment`, {
                     method: 'POST',
                     headers: {
                       'content-Type': 'application/json',
