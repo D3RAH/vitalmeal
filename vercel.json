@@ -21,9 +21,8 @@
       "dest": "Backend/server.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "Frontend/$1",
-      "continue": true
+    "src": "/(.*)",
+    "dest": "Frontend/index.html"
     }
   ]
 }
