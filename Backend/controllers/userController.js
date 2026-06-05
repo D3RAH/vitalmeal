@@ -23,9 +23,9 @@ const loginUser = async (req,res) => {
         const token = createToken(user._id);
         res.json({success:true,token})
     } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"error"})
-    }
+        console.log("LOGIN ERROR:", error.message, error.stack);
+        res.json({success:false,message:error.message})
+}
 }
 
 const createToken = (id) => {
@@ -66,9 +66,9 @@ const registerUser = async (req,res) => {
         return res.json({success:true,token})
 
     } catch (error) {
-        console.log(error)
-        return res.json({success:false,message:"error"})
-    }
+        console.log("REGISTER ERROR:", error.message, error.stack);
+        return res.json({success:false,message:error.message})
+}
 }
 
 export {loginUser,registerUser}

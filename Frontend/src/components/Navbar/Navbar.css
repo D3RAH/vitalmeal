@@ -293,6 +293,36 @@
 }
 
 
+@media (max-width: 480px) {
+    .navbar {
+        gap: 10px;
+        padding: 15px 6px;
+    }
+
+    .navbar-search-container {
+        max-width: 140px;
+        padding: 6px 8px;
+    }
+
+    .navbar-search-input {
+        font-size: 12px;
+    }
+
+    .navbar-right {
+        gap: 10px;
+    }
+
+    .navbar-right button {
+        padding: 5px 0;
+        width: 75px;
+        font-size: 11px;
+        display: flex;
+        justify-content: center;    
+        align-items: center;
+    }
+}
+
+
 
 @media (max-width: 380px) {
     .navbar {
@@ -314,7 +344,11 @@
     }
 
     .navbar-right button {
-        padding: 5px 10px;
+        padding: 5px 0;
+        width: 75px;
         font-size: 11px;
+        display: flex;
+        justify-content: center;    
+        align-items: center;
     }
 }

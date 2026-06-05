@@ -74,3 +74,19 @@
         gap: 20px;
     }
 }
+
+@media (max-width: 600px) {
+    .explore-menu-list {
+        /* over ride apps max width of 92% */
+        margin-left: -4vw; 
+        margin-right: -4vw;
+        padding-left: 4vw;
+        padding-right: 4vw;
+        scroll-padding-inline: 4vw;
+        gap: 16px;
+    }
+    
+    .explore-menu-list-item p {
+        font-size: 15px;
+    }
+}
