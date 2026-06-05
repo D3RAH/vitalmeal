@@ -88,7 +88,7 @@ export const chatWithBot = async (req, res) => {
                     {
                         email: emailForPaystack,
                         amount: amountInKobo,
-                        callback_url: "http://localhost:5173/payment-success", 
+                        callback_url: `${process.env.FRONTEND_URL}/payment-success`,
                     },
                     {
                         headers: {

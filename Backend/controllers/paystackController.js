@@ -15,7 +15,7 @@ export const initializePayment = async (req, res) => {
       {
         email,
         amount, // amount in kobo (₦1000 = 100000)
-        callback_url: "http://localhost:5173/payment-success",
+        callback_url: `${process.env.FRONTEND_URL}/payment-success`,
       },
       {
         headers: {
