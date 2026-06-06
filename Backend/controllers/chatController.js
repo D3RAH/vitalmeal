@@ -10,38 +10,41 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // VitaMeal Menu Context
 const vitalMealContext = `
-You are VitaMeal's helpful customer service assistant in Warri, Delta State. 
-You provide information about healthy Nigerian and international cuisine.
+You are VitaMeal's customer service assistant in Warri, Delta State.
+You help customers with menu information, pricing, and orders.
+
+IMPORTANT BEHAVIOR RULES:
+- Do NOT greet the user. Jump straight to answering their question.
+- Do NOT say "Migwo", "Welcome", "Hello" or any greeting in ANY response.
+- Keep responses concise and direct.
+- Do NOT repeat information already given in the conversation.
 
 OUR FULL MENU & PRICING:
+RICE: Chinese Rice ₦2,200 | Jollof Rice ₦2,400 | Coconut Rice ₦2,100 | Ofada Rice ₦2,800
+SOUPS: Efo Riro ₦2,300 | Egusi Soup ₦2,500 | Banga Soup ₦2,700 | Pepper Soup ₦2,000
+GRILLS: Grilled Chicken ₦3,500 | Grilled Tilapia ₦4,000 | Asun ₦3,800 | Peppered Gizzard ₦2,500
+SWALLOW: Pounded Yam & Egusi ₦3,000 | Eba & Efo Riro ₦2,500 | Amala & Ewedu ₦2,600 | Fufu & Okra ₦2,800
+NIGERIAN SPECIALS: Moi Moi ₦1,500 | Pap & Bean Cake ₦1,200 | Suya ₦2,000 | Plantain & Beans ₦1,800
+PASTA: Cheese Pasta ₦2,500 | Tomato Pasta ₦2,300 | Creamy Pasta ₦2,800 | Chicken Pasta ₦3,000
+NOODLES: Butter Noodles ₦2,000 | Veg Noodles ₦2,200 | Somen Noodles ₦2,500 | Cooked Noodles ₦2,300
+SANDWICH: Chicken Sandwich ₦2,200 | Vegan Sandwich ₦1,800 | Grilled Sandwich ₦2,400 | Bread Sandwich ₦2,000
+DESSERTS: Cup Cake ₦1,500 | Vegan Cake ₦2,000 | Butterscotch Cake ₦2,200 | Sliced Cake ₦1,800
 
-RICE:
-- Chinese Rice: ₦2,200 | Jollof Rice: ₦2,400 | Coconut Rice: ₦2,100 | Ofada Rice: ₦2,800
-
-SOUPS:
-- Efo Riro: ₦2,300 | Egusi Soup: ₦2,500 | Banga Soup: ₦2,700 | Pepper Soup: ₦2,000
-
-GRILLS:
-- Grilled Chicken: ₦3,500 | Grilled Tilapia: ₦4,000 | Asun (Goat Meat): ₦3,800 | Peppered Gizzard: ₦2,500
-
-DESSERTS:
-- Cup Cake: ₦1,500 | Vegan Cake: ₦2,000 | Butterscotch Cake: ₦2,200 | Sliced Cake: ₦1,800
-
-... (Rest of my menu items)
-
-DELIVERY INFO:
-- Location: Warri, Delta State | Fee: ₦200 flat rate | Time: 30-45 minutes
+DELIVERY: Warri, Delta State | ₦200 flat rate | 30-45 minutes
 
 ORDERING RULES:
-1. CALCULATE the total cost based on the prices above.
-2. ALWAYS add the ₦200 Delivery Fee.
-3. FORMAT as a clear Markdown receipt with a TOTAL line.
-4. Mention that payment is made via Paystack before delivery.
+1. When a customer orders, calculate total + ₦200 delivery fee.
+2. Show receipt as a Markdown table with Item and Price columns.
+3. End receipt with a TOTAL row.
+4. After receipt, ask ONLY: "Would you like to proceed to payment?"
+5. ONLY include the keyword PROCEED_TO_PAYMENT in your response when the user explicitly says yes/proceed/pay.
+6. Never send payment link automatically after showing receipt.
 `;
 
 export const chatWithBot = async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, history = [] } = req.body;
+        const trimmedHistory = history.slice(-10);
         const userId = req.body.userId; // Provided by authMiddleware
 
         if (!userId) {
@@ -66,9 +69,10 @@ export const chatWithBot = async (req, res) => {
         const chat = model.startChat({
             history: [
                 { role: "user", parts: [{ text: vitalMealContext }] },
-                { role: "model", parts: [{ text: "Understood. I am the VitaMeal assistant for Warri. I will provide menu info and calculate receipts including the ₦200 delivery fee." }] },
+                { role: "model", parts: [{ text: "Understood. I will answer questions directly without greetings." }] },
+                ...trimmedHistory
             ],
-            generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
         });
 
         const result = await chat.sendMessage(message);
@@ -76,7 +80,8 @@ export const chatWithBot = async (req, res) => {
         let botReply = response.text();
 
         // Regex looks for "TOTAL", skips symbols/pipes, and grabs the number
-        const totalMatch = botReply.match(/TOTAL[\s*|:]*₦?\s*([\d,]+)/i);
+        const shouldPay = botReply.includes('PROCEED_TO_PAYMENT');
+        const totalMatch = shouldPay ? botReply.match(/₦\s*([\d,]+)(?=[^\d]*$)/i) : null;
 
         if (totalMatch) {
             try {
@@ -101,6 +106,7 @@ export const chatWithBot = async (req, res) => {
                 if (paystackRes.data.status) {
                     const payUrl = paystackRes.data.data.authorization_url;
                     botReply += `\n\n💳 **Secure Payment Link:**\n${payUrl}`;
+                    botReply = botReply.replace('PROCEED_TO_PAYMENT', '').trim();
                 }
             } catch (pErr) {
                 console.error("Paystack initialization failed:", pErr.message);
@@ -112,7 +118,7 @@ export const chatWithBot = async (req, res) => {
     } catch (error) {
         console.error("Chat error details:", error.message);
         
-        if (error.status === 503 || error.status === 429) {
+        if (error.status === 503 || error.status === 429 || error?.message?.includes('503') || error?.message?.includes('429')) {
             return res.json({ 
                 success: false, 
                 message: "Our AI chef is currently busy! Please try again in a few seconds." 

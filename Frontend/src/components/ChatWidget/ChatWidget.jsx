@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { StoreContext } from '../../context/StoreContext'
 import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'
 import './ChatWidget.css'
 import axios from 'axios'
 
@@ -38,7 +39,12 @@ const ChatWidget = () => {
     try {
       // pass the token in headers so backend can find userId/email
       const response = await axios.post(`${url}/api/chat/message`, 
-        { message: userMessage },
+        { message: userMessage,
+          history: messages.map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.text }]
+          }))
+        },
         { headers: { token: token } } 
       )
 
@@ -73,7 +79,12 @@ const ChatWidget = () => {
       {/* Chat Bubble Button */}
       <div 
         className={`chat-bubble ${isOpen ? 'hidden' : ''}`}
-        onClick={() => { setIsOpen(true); document.body.style.overflow = 'hidden'; }}
+        onClick={() => { 
+          setIsOpen(true);
+          document.body.style.overflow = 'hidden';
+          document.body.style.position = 'fixed';
+          document.body.style.width = '100%';
+        }}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" strokeWidth="2"/>
@@ -92,8 +103,13 @@ const ChatWidget = () => {
                 <p>Online</p>
               </div>
             </div>
-            <button 
-            onClick={() => { setIsOpen(false); document.body.style.overflow = ''; }}>✕</button>
+            <button className="chat-close" 
+            onClick={() => { 
+              setIsOpen(false);
+              document.body.style.overflow = '';
+              document.body.style.position = '';
+              document.body.style.width = '';
+             }}>✕</button>
           </div>
 
           {/* Messages */}
@@ -102,7 +118,7 @@ const ChatWidget = () => {
               <div key={index} className={`chat-message ${msg.role}`}>
                 <div className="message-bubble">
                     {msg.role === 'bot' ? (
-                        <ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.text.replace(/(https?:\/\/[^\s]+)/g, '[$1]($1)')}
                         </ReactMarkdown>
                     ) : (
