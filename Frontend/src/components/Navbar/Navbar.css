@@ -157,6 +157,10 @@
     border: 1px solid #B71000;
     outline: 2px solid white;
     list-style: none;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    -ms-border-radius: 4px;
+    -o-border-radius: 4px;
 }
 
 .nav-profile-dropdown li{

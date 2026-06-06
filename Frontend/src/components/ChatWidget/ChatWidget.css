@@ -298,17 +298,17 @@
 
 @media (max-width: 480px) {
   .chat-window {
-    width: 320px;
-    height: 660px;
+    width: calc(100vw - 60px);
+    height: 600px;
     bottom: 62px;
-    right: 15px;
+    right: 0;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .chat-header {
-    padding: 24px 20px 16px;
-  }
+    padding: 16px 20px;
+}
 
   .chat-bubble {
     bottom: 70px;
@@ -335,7 +335,7 @@
     border-radius: 20px;
   }
 
-  .chat-input-form {
-    padding: 16px 20px 24px;
+  .chat-input-form input {
+    font-size: 16px;
   }
 }

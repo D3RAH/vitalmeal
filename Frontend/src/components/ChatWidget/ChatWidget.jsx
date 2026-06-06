@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { StoreContext } from '../../context/StoreContext'
 import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown';
 import './ChatWidget.css'
@@ -8,6 +10,7 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState([
     { role: 'bot', text: "Hi! I'm VitaMeal's Virtual assistant. Ask me about our menu, prices, or delivery!" }
   ])
+  const { url } = useContext(StoreContext)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -34,7 +37,7 @@ const ChatWidget = () => {
 
     try {
       // pass the token in headers so backend can find userId/email
-      const response = await axios.post('http://localhost:3000/api/chat/message', 
+      const response = await axios.post(`${url}/api/chat/message`, 
         { message: userMessage },
         { headers: { token: token } } 
       )
@@ -70,7 +73,7 @@ const ChatWidget = () => {
       {/* Chat Bubble Button */}
       <div 
         className={`chat-bubble ${isOpen ? 'hidden' : ''}`}
-        onClick={() => setIsOpen(true)}
+        onClick={() => { setIsOpen(true); document.body.style.overflow = 'hidden'; }}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" strokeWidth="2"/>
@@ -89,7 +92,8 @@ const ChatWidget = () => {
                 <p>Online</p>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="chat-close">✕</button>
+            <button 
+            onClick={() => { setIsOpen(false); document.body.style.overflow = ''; }}>✕</button>
           </div>
 
           {/* Messages */}

@@ -1,13 +1,20 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import './Navbar.css'
 import { assets } from '../../assets/assets'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Cart from './../../pages/Cart/Cart';
 import { StoreContext } from '../../context/StoreContext';
 
 const Navbar = ({setShowLogin}) => {
 
+    const location = useLocation();
     const [menu,setMenu] = useState("home");
+
+    useEffect(() => {
+      if (location.pathname === '/') setMenu("home");
+      else if (location.pathname === '/cart') setMenu("cart");
+      else if (location.pathname === '/myorders') setMenu("orders");
+    }, [location]);
 
     const {getTotalCartAmount,token,setToken} = useContext(StoreContext)
 
