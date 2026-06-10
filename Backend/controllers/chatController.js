@@ -33,12 +33,18 @@ DESSERTS: Cup Cake ₦1,500 | Vegan Cake ₦2,000 | Butterscotch Cake ₦2,200 |
 DELIVERY: Warri, Delta State | ₦200 flat rate | 30-45 minutes
 
 ORDERING RULES:
-1. When a customer orders, calculate total + ₦200 delivery fee.
-2. Show receipt as a Markdown table with Item and Price columns.
-3. End receipt with a TOTAL row.
-4. After receipt, ask ONLY: "Would you like to proceed to payment?"
-5. ONLY include the keyword PROCEED_TO_PAYMENT in your response when the user explicitly says yes/proceed/pay.
-6. Never send payment link automatically after showing receipt.
+1. When a customer states what food they want, list their selections back to them in a Markdown table with Item and Price columns. Add a temporary TOTAL row for just the food items.
+2. CRITICAL STEP: Immediately below that initial table, ask the user: "Please provide your delivery address or location within Warri so we can finalize your order."
+3. Do NOT skip to the payment phase until the user has specified a location or address.
+4. Once the user provides their location, show an updated final receipt table that includes:
+   - The selected items and prices
+   - A "Delivery Fee" row (₦200 flat rate)
+   - A final "TOTAL" row
+5. Right below this final receipt, say: "Delivery to [Insert User's Location] will take 25-40 minutes. Would you like to proceed to payment?"
+6. When the user explicitly confirms payment (saying yes, proceed, go ahead, okay, etc.) AFTER seeing the final receipt with the delivery fee, respond with this exact text template:
+   Delicious choice! Your order is being processed for delivery to your location. 🛵
+   PROCEED_TO_PAYMENT
+7. Only append the PROCEED_TO_PAYMENT keyword flag at the absolute end when the user is explicitly confirming checkout. Do not drop it anywhere else.
 `;
 
 export const chatWithBot = async (req, res) => {
@@ -81,11 +87,13 @@ export const chatWithBot = async (req, res) => {
 
         // Regex looks for "TOTAL", skips symbols/pipes, and grabs the number
         const shouldPay = botReply.includes('PROCEED_TO_PAYMENT');
-        const totalMatch = shouldPay ? botReply.match(/₦\s*([\d,]+)(?=[^\d]*$)/i) : null;
+        const fullHistoryText = JSON.stringify(trimmedHistory);
+        const totalMatch = shouldPay ? (fullHistoryText.match(/TOTAL[\s\S]*?₦\s*([\d,]+)/i) || botReply.match(/₦\s*([\d,]+)/i)) : null;
+        const lastAmount = totalMatch ? totalMatch[1].replace(/,/g, '') : (shouldPay ? "2500" : null);
 
-        if (totalMatch) {
+        if (lastAmount) {
             try {
-                const amountValue = parseInt(totalMatch[1].replace(/,/g, ''));
+                const amountValue = parseInt(lastAmount);
                 const amountInKobo = amountValue * 100; 
 
                 const paystackRes = await axios.post(
@@ -104,9 +112,8 @@ export const chatWithBot = async (req, res) => {
                 );
 
                 if (paystackRes.data.status) {
-                    const payUrl = paystackRes.data.data.authorization_url;
-                    botReply += `\n\n💳 **Secure Payment Link:**\n${payUrl}`;
-                    botReply = botReply.replace('PROCEED_TO_PAYMENT', '').trim();
+                const payUrl = paystackRes.data.data.authorization_url;
+                botReply = `💳 **Your payment is ready!**\n\n[PROCEED TO SECURE PAYMENT](${payUrl})`;
                 }
             } catch (pErr) {
                 console.error("Paystack initialization failed:", pErr.message);

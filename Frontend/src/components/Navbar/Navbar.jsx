@@ -11,9 +11,17 @@ const Navbar = ({setShowLogin}) => {
     const [menu,setMenu] = useState("home");
 
     useEffect(() => {
-      if (location.pathname === '/') setMenu("home");
-      else if (location.pathname === '/cart') setMenu("cart");
-      else if (location.pathname === '/myorders') setMenu("orders");
+      const currentPath = location.pathname.toLowerCase();
+
+      if (currentPath === '/') {
+        setMenu("home");
+      } else if (currentPath === '/cart') {
+        setMenu("cart");
+      } else if (currentPath === '/myorders') {
+        setMenu("orders");
+      } else {
+        setMenu("");
+      }
     }, [location]);
 
     const {getTotalCartAmount,token,setToken} = useContext(StoreContext)
@@ -42,7 +50,7 @@ const Navbar = ({setShowLogin}) => {
             <img src={assets.search_icon} alt="" className="navbar-search-icon" />
           </div>
           <div className="navbar-search-icon-cart">
-            <Link to='/Cart'><img src={assets.basket_icon} alt="" /></Link>
+            <Link to='/cart'><img src={assets.basket_icon} alt="" /></Link>
             <div className={getTotalCartAmount()===0?"":"dot"}> </div>
           </div>
           {!token?<button onClick={()=>setShowLogin(true)}>sign in</button>

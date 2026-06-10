@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import './paymentSuccess.css'
 import { StoreContext } from '../../context/StoreContext'
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [status, setStatus] = useState('Verifying payment...')
   const reference = searchParams.get('reference')
   const {setCartItems, url } = useContext(StoreContext)
@@ -72,12 +73,33 @@ const PaymentSuccess = () => {
         };
 
         verifyPayment();
-    }, [reference, orderId, setCartItems]);
+    }, [reference, orderId, setCartItems,url]);
+
+    // Countdown effect to redirect after showing the payment status
+    useEffect(() => {
+      if (status !== 'Payment Successful ✅') return;
+
+    
+      // Trigger router navigation
+      const redirectTimeout = setTimeout(() => {
+        navigate('/');
+      }, 5000);
+
+      return () => clearTimeout(redirectTimeout);
+    
+    }, [status, navigate]);
 
   return (
     <div className="payment-success-container">
       <h2 className="payment-status">{status}</h2>
       {reference && <p className="payment-reference">Transaction Reference: {reference}</p>}
+
+      {/* Dynamic countdown element injected into the UI layout */}
+      {status === 'Payment Successful ✅' && (
+        <p className="redirect-notice">
+          Redirecting<span className="animated-dots"><span>.</span><span>.</span><span>.</span></span>
+        </p>
+      )}
     </div>
   )
 }

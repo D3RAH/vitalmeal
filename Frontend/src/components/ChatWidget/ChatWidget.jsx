@@ -119,7 +119,7 @@ const ChatWidget = () => {
                 <div className="message-bubble">
                     {msg.role === 'bot' ? (
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.text.replace(/(https?:\/\/[^\s]+)/g, '[$1]($1)')}
+                          {msg.text}
                         </ReactMarkdown>
                     ) : (
                         msg.text
