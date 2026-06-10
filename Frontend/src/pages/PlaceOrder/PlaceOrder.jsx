@@ -48,7 +48,7 @@ const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(Stor
     let orderData = {
       address: data,
       items: orderItems,
-      amount: getTotalCartAmount() + 2,
+      amount: getTotalCartAmount() + 200,
     };
 
     const orderResponse = await fetch(url + "/api/order/place", {
@@ -73,7 +73,7 @@ const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(Stor
     console.log("Order created successfully:", orderResult.orderId);
 
     //Initialize payment
-    const amount = (getTotalCartAmount() + 2) * 100;
+    const amount = (getTotalCartAmount() + 200) * 100;
 
     const paymentResponse = await fetch(url + "/api/paystack/initialize", {
       method: "POST",
@@ -142,12 +142,12 @@ const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(Stor
             <hr/>
             <div className="cart-total-details">
               <p>Delivery fee</p>
-              <p>₦{getTotalCartAmount()===0?0:2}</p>
+              <p>₦{getTotalCartAmount() === 0 ? 0 : 200}</p>
             </div>
             <hr/>
             <div className="cart-total-details">
               <b>Total</b>
-              <b>₦{getTotalCartAmount() ===0?0:getTotalCartAmount() + 2}</b>
+              <b>₦{getTotalCartAmount() ===0?0:getTotalCartAmount() + 200}</b>
             </div>
           </div>
           <button type="submit" disabled={loading}>

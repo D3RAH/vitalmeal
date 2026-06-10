@@ -1,12 +1,13 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import axios from "axios";
 import userModel from "../models/userModel.js";
 
-if (!process.env.GEMINI_API_KEY) {
-    console.error("CRITICAL ERROR: GEMINI_API_KEY is not defined in .env");
+if (!process.env.GROQ_API_KEY) {
+    console.error("CRITICAL ERROR: GROQ_API_KEY is not defined in .env");
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 
 // VitaMeal Menu Context
 const vitalMealContext = `
@@ -14,9 +15,12 @@ You are VitaMeal's customer service assistant in Warri, Delta State.
 You help customers with menu information, pricing, and orders.
 
 IMPORTANT BEHAVIOR RULES:
+- NEVER add text inside a Markdown table after the TOTAL row. All text must appear OUTSIDE and BELOW the table.
+- Format menu categories as bold headers using ** (e.g. **RICE**) on their own separate line, followed by a bullet list. Always add a blank line before each category header.
 - Do NOT greet the user. Jump straight to answering their question.
 - Do NOT say "Migwo", "Welcome", "Hello" or any greeting in ANY response.
 - Keep responses concise and direct.
+- Be warm and friendly. Add short natural phrases like "Here's our menu!", "Here's your order summary:", "Great choice!" where appropriate, but keep it brief.
 - Do NOT repeat information already given in the conversation.
 
 OUR FULL MENU & PRICING:
@@ -33,18 +37,17 @@ DESSERTS: Cup Cake ₦1,500 | Vegan Cake ₦2,000 | Butterscotch Cake ₦2,200 |
 DELIVERY: Warri, Delta State | ₦200 flat rate | 30-45 minutes
 
 ORDERING RULES:
-1. When a customer states what food they want, list their selections back to them in a Markdown table with Item and Price columns. Add a temporary TOTAL row for just the food items.
-2. CRITICAL STEP: Immediately below that initial table, ask the user: "Please provide your delivery address or location within Warri so we can finalize your order."
-3. Do NOT skip to the payment phase until the user has specified a location or address.
-4. Once the user provides their location, show an updated final receipt table that includes:
+1. When a customer states what food they want, show a Markdown table with Item and Price columns. End the table with a TOTAL row for just the food items. After the table is fully closed, on a new line OUTSIDE the table, ask: "Please provide your delivery address or location within Warri so we can finalize your order."
+2. Do NOT skip to the payment phase until the user has specified a location or address.
+3. Once the user provides their location, show a new Markdown table with:
    - The selected items and prices
-   - A "Delivery Fee" row (₦200 flat rate)
+   - A "Delivery Fee" row (₦200)
    - A final "TOTAL" row
-5. Right below this final receipt, say: "Delivery to [Insert User's Location] will take 25-40 minutes. Would you like to proceed to payment?"
-6. When the user explicitly confirms payment (saying yes, proceed, go ahead, okay, etc.) AFTER seeing the final receipt with the delivery fee, respond with this exact text template:
+   After the table is fully closed, on a new line OUTSIDE the table, say: "Delivery to [User's Location] will take 25-40 minutes. Would you like to proceed to payment?"
+4. When the user explicitly confirms payment (saying yes, proceed, go ahead, okay, etc.) AFTER seeing the final receipt with the delivery fee, respond with this exact text template:
    Delicious choice! Your order is being processed for delivery to your location. 🛵
    PROCEED_TO_PAYMENT
-7. Only append the PROCEED_TO_PAYMENT keyword flag at the absolute end when the user is explicitly confirming checkout. Do not drop it anywhere else.
+5. Only append the PROCEED_TO_PAYMENT keyword flag at the absolute end when the user is explicitly confirming checkout. Do not use it anywhere else.
 `;
 
 export const chatWithBot = async (req, res) => {
@@ -69,24 +72,28 @@ export const chatWithBot = async (req, res) => {
             return res.json({ success: false, message: "Message is required" });
         }
 
-        // Initialize Gemini
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        // Initialize Groq
+        const chatHistory = trimmedHistory.map(m => ({
+            role: m.role === 'model' ? 'assistant' : 'user',
+            content: m.parts[0].text
+        }));
 
-        const chat = model.startChat({
-            history: [
-                { role: "user", parts: [{ text: vitalMealContext }] },
-                { role: "model", parts: [{ text: "Understood. I will answer questions directly without greetings." }] },
-                ...trimmedHistory
+        const completion = await groq.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: vitalMealContext },
+                ...chatHistory,
+                { role: "user", content: message }
             ],
-            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
+            max_tokens: 2048,
+            temperature: 0.7,
         });
 
-        const result = await chat.sendMessage(message);
-        const response = await result.response;
-        let botReply = response.text();
+        let botReply = completion.choices[0].message.content;
 
         // Regex looks for "TOTAL", skips symbols/pipes, and grabs the number
         const shouldPay = botReply.includes('PROCEED_TO_PAYMENT');
+        botReply = botReply.replace('PROCEED_TO_PAYMENT', '').trim();
         const fullHistoryText = JSON.stringify(trimmedHistory);
         const totalMatch = shouldPay ? (fullHistoryText.match(/TOTAL[\s\S]*?₦\s*([\d,]+)/i) || botReply.match(/₦\s*([\d,]+)/i)) : null;
         const lastAmount = totalMatch ? totalMatch[1].replace(/,/g, '') : (shouldPay ? "2500" : null);
