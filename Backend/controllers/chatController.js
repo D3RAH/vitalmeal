@@ -95,8 +95,10 @@ export const chatWithBot = async (req, res) => {
         const shouldPay = botReply.includes('PROCEED_TO_PAYMENT');
         botReply = botReply.replace('PROCEED_TO_PAYMENT', '').trim();
         const fullHistoryText = JSON.stringify(trimmedHistory);
-        const totalMatch = shouldPay ? (fullHistoryText.match(/TOTAL[\s\S]*?₦\s*([\d,]+)/i) || botReply.match(/₦\s*([\d,]+)/i)) : null;
-        const lastAmount = totalMatch ? totalMatch[1].replace(/,/g, '') : (shouldPay ? "2500" : null);
+        const allTotalMatches = shouldPay ? [...fullHistoryText.matchAll(/TOTAL[^₦]*₦\s*([\d,]+)/gi)] : [];
+        const lastAmount = allTotalMatches.length > 0 
+            ? allTotalMatches[allTotalMatches.length - 1][1].replace(/,/g, '')
+            : (shouldPay ? "2500" : null);
 
         if (lastAmount) {
             try {
